@@ -10,11 +10,18 @@ import UIKit
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
-
+    let appComposer: AppComposer = .init()
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
         return true
+    }
+    
+    
+    func sourceURLs(from maps: [MapModel]) -> [URL] {
+        maps.flatMap { map in
+            [map.sourceURL].compactMap { $0 } + sourceURLs(from: map.childs)
+        }
     }
 
     // MARK: UISceneSession Lifecycle
