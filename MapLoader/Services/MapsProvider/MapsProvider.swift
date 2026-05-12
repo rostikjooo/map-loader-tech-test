@@ -8,19 +8,61 @@
 import Foundation
 
 final class MapsProvider {
-    let regionsFetcher = RegionsFetcher()
-    let urlBuilder = OsmAndDownloadURLBuilder()
-    let downloader = SerialFileDownloader()
+    private let regionsFetcher: RegionsFetcher
+    private let urlBuilder: OsmAndDownloadURLBuilder
+    private let downloader: SerialFileDownloader
+    private let lock = NSLock()
+    private var mapsTask: Task<[MapModel], Error>?
     
-    func fetchMaps()  async throws -> [MapModel] {
+    init(regionsFetcher: RegionsFetcher, urlBuilder: OsmAndDownloadURLBuilder, downloader: SerialFileDownloader) {
+        self.regionsFetcher = regionsFetcher
+        self.urlBuilder = urlBuilder
+        self.downloader = downloader
+    }
+    
+    func getMaps() async -> [MapModel] {
+        let task = getOrCreateMapsTask()
+
+        do {
+            return try await task.value
+        } catch {
+            clearMapsTask()
+            return []
+        }
+    }
+
+    private func getOrCreateMapsTask() -> Task<[MapModel], Error> {
+        lock.lock()
+        defer { lock.unlock() }
+
+        if let mapsTask {
+            return mapsTask
+        }
+
+        let task = Task<[MapModel], Error> { [weak self] in
+            guard let self else { return [] }
+            return try await self.fetchMaps()
+        }
+
+        mapsTask = task
+        return task
+    }
+
+    private func clearMapsTask() {
+        lock.lock()
+        defer { lock.unlock() }
+
+        mapsTask = nil
+    }
+    
+    private func fetchMaps()  async throws -> [MapModel] {
+        
         let regions = try await regionsFetcher.fetchRegions()
         
         let maps = regions.map { region in
             mapModel(
                 for: region,
-                parent: nil,
-                continentName: region.name,
-                path: []
+                regionPath: []
             )
         }
         
@@ -29,23 +71,20 @@ final class MapsProvider {
     
     private func mapModel(
         for region: Region,
-        parent: Region?,
-        continentName: String,
-        path: [String]
+        regionPath: [Region]
     ) -> MapModel {
+        let currentRegionPath = regionPath + [region]
+        
         let sourceURL = urlBuilder.mapDownloadURL(
             for: region,
-            parent: parent,
-            continentName: continentName
+            path: currentRegionPath
         )
         
-        let currentPath = path + [region.name]
+        let currentPath = currentRegionPath.map(\.name)
         let childs = region.children.map { child in
             mapModel(
                 for: child,
-                parent: region,
-                continentName: continentName,
-                path: currentPath
+                regionPath: currentRegionPath
             )
         }
         
@@ -62,7 +101,7 @@ final class MapsProvider {
 }
 
 
-struct MapModel {
+struct MapModel: Sendable {
     let name: String
     let path: [String]
     let sourceURL: URL?

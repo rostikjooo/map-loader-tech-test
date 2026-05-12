@@ -25,6 +25,8 @@ struct Region: Equatable {
     var srtm: Bool?
     var hillshade: Bool?
 
+    var downloadPrefix: String?
+    var downloadSuffix: String?
     var innerDownloadPrefix: String?
     var innerDownloadSuffix: String?
     var joinMapFiles: Bool?

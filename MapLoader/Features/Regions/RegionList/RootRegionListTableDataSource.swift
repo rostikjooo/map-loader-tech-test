@@ -10,11 +10,12 @@ import UIKit
 
 class RootRegionListTableDataSource: RegionListTableDataSource {
     
-    static let deviceMemorySection: Section = .init(id: "deviceMemory", name: "Device Memory")
+    static let deviceMemorySection: Section = .init(id: "deviceMemory", name: nil)
     lazy var deviceMemoryRow: Row = .init(
         id: "deviceMemory",
-        reuseIdentifier: "deviceMemoryCell",
+        reuseIdentifier: "MemoryInfoTableViewCell",
         configure: { [weak self] cell in
+            guard let cell = cell as? MemoryInfoTableViewCell else { return }
             self?.viewModel.configureDeviceMemoryCell(cell)
         }
     )
@@ -29,7 +30,9 @@ class RootRegionListTableDataSource: RegionListTableDataSource {
     
     override func registerCells(in tableView: UITableView) {
         super.registerCells(in: tableView)
-        // TODO: register cells
-        tableView.register(UITableViewCell.self, forCellReuseIdentifier: "deviceMemoryCell")
+        tableView.register(
+            UINib(nibName: "MemoryInfoTableViewCell", bundle: nil),
+            forCellReuseIdentifier: "MemoryInfoTableViewCell"
+        )
     }
 }

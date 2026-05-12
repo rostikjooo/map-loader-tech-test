@@ -10,9 +10,18 @@ import UIKit
 final class AppComposer {
 
     private var regionsCoordinator: RegionsCoordinator?
+    let fileDownloader = SerialFileDownloader()
+    let storageInfoProvider = StorageInfoProvider()
+    lazy private(set) var mapsProvider: MapsProvider = {
+        MapsProvider(
+            regionsFetcher: RegionsFetcher(),
+            urlBuilder: OsmAndDownloadURLBuilder(),
+            downloader: fileDownloader
+        )
+    }()
 
     func makeRootVC() -> UIViewController {
-        let regionsCoordinator = RegionsCoordinator()
+        let regionsCoordinator = RegionsCoordinator(composer: self)
         regionsCoordinator.start()
         self.regionsCoordinator = regionsCoordinator
 

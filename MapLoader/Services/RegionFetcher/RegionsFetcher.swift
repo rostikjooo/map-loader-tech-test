@@ -16,9 +16,6 @@ final class RegionsFetcher {
         
         let regionsList = try RegionsXMLParser().parse(data: data)
         
-        print(regionsList.regions.first?.name)
-        print(regionsList.regions.first?.children.count)
-        
         return regionsList.regions
     }
 

@@ -56,6 +56,8 @@ extension RegionsXMLParser: XMLParserDelegate {
             roads: attributeDict["roads"].xmlBool,
             srtm: attributeDict["srtm"].xmlBool,
             hillshade: attributeDict["hillshade"].xmlBool,
+            downloadPrefix: attributeDict["download_prefix"],
+            downloadSuffix: attributeDict["download_suffix"],
             innerDownloadPrefix: attributeDict["inner_download_prefix"],
             innerDownloadSuffix: attributeDict["inner_download_suffix"],
             joinMapFiles: attributeDict["join_map_files"].xmlBool,
