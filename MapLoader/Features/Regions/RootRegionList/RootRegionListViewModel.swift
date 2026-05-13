@@ -13,7 +13,7 @@ final class RootRegionListViewModel: RegionListProviding {
         listDataSource
     }
     var listDataSource: RootRegionListTableDataSource!
-    let title = "Download Maps"
+    let title = L10n.rootRegionTitle
     
     let downloader: SerialFileDownloader
     weak var coordinator: RegionsCoordinator!
@@ -83,8 +83,8 @@ final class RootRegionListViewModel: RegionListProviding {
     func configureDeviceMemoryCell(_ cell: MemoryInfoTableViewCell) {
         let freeSpace = model.storageInfo?.availableSpace
         let freeSpaceString = freeSpace.map { byteFormatter.string(from: $0) }
-        let summary = freeSpaceString.map { "Free \($0)" } ?? ""
-        let viewModel = MemoryInfoTableViewCell.ViewModel(title: "Device memory", summary: summary, occupiedMemoryFraction: model.fractionSpaceTaken)
+        let summary = freeSpaceString.map { L10n.freeSpaceValue($0) } ?? ""
+        let viewModel = MemoryInfoTableViewCell.ViewModel(title: L10n.deviceMemory, summary: summary, occupiedMemoryFraction: model.fractionSpaceTaken)
         
         cell.apply(viewModel: viewModel)
     }

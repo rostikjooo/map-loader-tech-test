@@ -18,7 +18,8 @@ class RegionListViewController: UIViewController {
     
     @available(*, unavailable)
     required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
+        assertionFailure("init(coder:) has not been implemented")
+        return nil
     }
 
     override func viewDidLoad() {
@@ -47,7 +48,7 @@ class RegionListViewController: UIViewController {
         
         tableView.backgroundColor = .systemGroupedBackground
         tableView.separatorStyle = .singleLine
-        tableView.separatorInset = .init(top: 0, left: 15, bottom: 0, right: 0)
+        tableView.separatorInset = .init(top: 0, left: 62, bottom: 0, right: 15)
         // FIXME: in design color is #E6E6E6
         tableView.separatorColor = .tableSeparator
 

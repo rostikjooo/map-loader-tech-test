@@ -19,7 +19,7 @@ extension RegionListProviding {
     
     func configureRegionCell(cell: RegionTableViewCell, byId id: String) {
         guard let region = findRegion(byId: id), let sourceURL = region.sourceURL else {
-            print("configureRegionCell: cell doesn't match model")
+            assertionFailure("configureRegionCell: cell doesn't match model")
             return
         }
         
@@ -32,21 +32,21 @@ extension RegionListProviding {
         } else {
             status = .notLoaded
         }
-        let viewModel = RegionTableViewCell.ViewModel(name: region.name, status: status)
+        let viewModel = RegionTableViewCell.ViewModel(name: region.name.capitalized, status: status)
         cell.apply(viewModel: viewModel)
     }
     
     func configureRegionNodeCell(cell: RegionNodeTableViewCell, byId id: String) {
         guard let region = findRegion(byId: id), !region.childs.isEmpty else {
-            print("configureRegionNodeCell: cell doesn't match model")
+            assertionFailure("configureRegionNodeCell: cell doesn't match model")
             return
         }
-        cell.apply(name: region.name)
+        cell.apply(name: region.name.capitalized)
     }
     
     func didSelectRow(withId id: String) {
         guard let region = findRegion(byId: id) else {
-            print("didSelectRow: cell doesn't match model")
+            assertionFailure("didSelectRow: cell doesn't match model")
             return
         }
         if !region.childs.isEmpty {

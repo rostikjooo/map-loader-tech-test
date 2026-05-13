@@ -13,7 +13,7 @@ class RegionListViewModel: RegionListProviding {
     }
     lazy var listDataSource = RegionListTableDataSource(viewModel: self)
     var title: String {
-        model.name
+        model.name.capitalized
     }
     let downloader: SerialFileDownloader
     weak var coordinator: RegionsCoordinator!

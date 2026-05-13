@@ -61,7 +61,7 @@ class RootRegionListTableDataSource: RegionListTableDataSource {
                 continue
             }
             
-            newSections.append(Section(id: regionMap.name.capitalized, name: regionMap.name))
+            newSections.append(Section(id: regionMap.name, name: regionMap.name.capitalized))
             
             let newSectionRows = regionMap.childs.map { subregion in
                 regionRow(region: subregion)

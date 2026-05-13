@@ -23,23 +23,26 @@
                             <constraint firstAttribute="width" constant="30" id="SQ6-jN-6Ws"/>
                         </constraints>
                     </imageView>
+                    <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="chevron.forward" catalog="system" translatesAutoresizingMaskIntoConstraints="NO" id="ldd-dW-B5W">
+                        <rect key="frame" x="290.66666666666669" y="22" width="12.666666666666686" height="16.666666666666664"/>
+                    </imageView>
                     <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="NYW-37-9HT">
-                        <rect key="frame" x="62" y="10" width="42" height="40"/>
+                        <rect key="frame" x="61.999999999999986" y="20" width="212.66666666666663" height="20.333333333333329"/>
                         <fontDescription key="fontDescription" type="system" pointSize="17"/>
                         <nil key="textColor"/>
                         <nil key="highlightedColor"/>
                     </label>
-                    <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="chevron.forward" catalog="system" translatesAutoresizingMaskIntoConstraints="NO" id="ldd-dW-B5W">
-                        <rect key="frame" x="290.66666666666669" y="22" width="12.666666666666686" height="16.666666666666664"/>
-                    </imageView>
                 </subviews>
                 <constraints>
                     <constraint firstItem="dik-7A-t9z" firstAttribute="leading" secondItem="H2p-sc-9uM" secondAttribute="leading" constant="16" id="1oU-Ps-5ZL"/>
                     <constraint firstItem="NYW-37-9HT" firstAttribute="centerY" secondItem="H2p-sc-9uM" secondAttribute="centerY" id="2gK-Xh-fKq"/>
+                    <constraint firstItem="dik-7A-t9z" firstAttribute="top" secondItem="H2p-sc-9uM" secondAttribute="top" priority="995" constant="11" id="86V-7D-EOJ"/>
                     <constraint firstAttribute="trailing" secondItem="ldd-dW-B5W" secondAttribute="centerX" constant="23" id="Aam-vi-6Ib"/>
                     <constraint firstItem="ldd-dW-B5W" firstAttribute="centerY" secondItem="H2p-sc-9uM" secondAttribute="centerY" id="KXq-KW-Vtf"/>
+                    <constraint firstItem="dik-7A-t9z" firstAttribute="top" relation="greaterThanOrEqual" secondItem="H2p-sc-9uM" secondAttribute="top" constant="11" id="P5H-2A-VZR"/>
+                    <constraint firstItem="ldd-dW-B5W" firstAttribute="leading" secondItem="NYW-37-9HT" secondAttribute="trailing" constant="16" id="UUP-4E-c3G"/>
                     <constraint firstItem="NYW-37-9HT" firstAttribute="leading" secondItem="dik-7A-t9z" secondAttribute="trailing" constant="16" id="XOt-Ml-tUZ"/>
-                    <constraint firstItem="NYW-37-9HT" firstAttribute="top" secondItem="H2p-sc-9uM" secondAttribute="top" constant="10" id="nyW-ZV-wUt"/>
+                    <constraint firstItem="NYW-37-9HT" firstAttribute="centerY" secondItem="H2p-sc-9uM" secondAttribute="centerY" id="k3g-27-e2l"/>
                     <constraint firstItem="dik-7A-t9z" firstAttribute="centerY" secondItem="H2p-sc-9uM" secondAttribute="centerY" id="yOS-Lp-WFc"/>
                 </constraints>
             </tableViewCellContentView>

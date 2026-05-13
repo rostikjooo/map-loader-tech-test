@@ -25,7 +25,8 @@ class RegionTableViewCell: UITableViewCell {
         nameLabel?.font = .preferredFont(forTextStyle: .body)
         nameLabel?.textColor = .textPrimary
         progressBar?.trackColor = .tableSeparator
-        progressBar?.cornerRadius = 3
+        progressBar?.cornerRadius = 1.5
+        downloadButton?.isUserInteractionEnabled = false
     }
     
     func apply(viewModel: ViewModel) {
@@ -44,7 +45,7 @@ class RegionTableViewCell: UITableViewCell {
             downloadButton?.isHidden = true
         case .loading:
             downloadButton?.isHidden = false
-            downloadButton?.setImage(.icCustomShowOnMap, for: .normal)
+            downloadButton?.setImage(.progressCircular, for: .normal)
         case .notLoaded:
             downloadButton?.isHidden = false
             downloadButton?.setImage(.icCustomDownload, for: .normal)
