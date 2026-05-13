@@ -8,7 +8,8 @@
 import Foundation
 
 class SerialFileDownloader: NSObject {
-    static let downloadingAdvancedNotification = Notification.Name("myNotification")
+    static let downloadingAdvancedNotification = Notification.Name("com.map-loader.downloading-advances-notification")
+    private static let backgroundSessionIdentifier = "com.map-loader.background-downloads"
     
     private var session: URLSession!
     private var activeTask: URLSessionDownloadTask?
@@ -16,6 +17,7 @@ class SerialFileDownloader: NSObject {
     private let syncQueue = DispatchQueue(label: "com.map-loader.serial-file-downloader")
     private var fileMoveErrors: [Int: Error] = [:]
     private var currentProgress: [URL: Double] = [:]
+    private var backgroundCompletionHandler: (() -> Void)?
     @Storage(key: "serialDownloaderQueueKey", fallback: []) private var queue: [URL]
 
     override init() {
@@ -75,6 +77,31 @@ class SerialFileDownloader: NSObject {
         return localURL
     }
 
+    @discardableResult
+    func handleEventsForBackgroundURLSession(
+        identifier: String,
+        completionHandler: @escaping () -> Void
+    ) -> Bool {
+        guard identifier == Self.backgroundSessionIdentifier else {
+            return false
+        }
+
+        let previousBackgroundCompletionHandler = syncQueue.sync {
+            let previousBackgroundCompletionHandler = self.backgroundCompletionHandler
+            self.backgroundCompletionHandler = completionHandler
+
+            return previousBackgroundCompletionHandler
+        }
+
+        if let previousBackgroundCompletionHandler {
+            DispatchQueue.main.async {
+                previousBackgroundCompletionHandler()
+            }
+        }
+
+        return true
+    }
+
     private func restoreActiveTask() {
         session.getAllTasks { [weak self] tasks in
             guard let self else { return }
@@ -109,7 +136,7 @@ class SerialFileDownloader: NSObject {
 
     private func makeSession() -> URLSession {
         let config = URLSessionConfiguration.background(
-            withIdentifier: "com.map-loader.background-downloads"
+            withIdentifier: Self.backgroundSessionIdentifier
         )
 
         config.sessionSendsLaunchEvents = true
@@ -171,6 +198,20 @@ class SerialFileDownloader: NSObject {
 }
 
 extension SerialFileDownloader: URLSessionDownloadDelegate {
+    func urlSessionDidFinishEvents(forBackgroundURLSession session: URLSession) {
+        syncQueue.async {
+            guard let backgroundCompletionHandler = self.backgroundCompletionHandler else {
+                return
+            }
+
+            self.backgroundCompletionHandler = nil
+
+            DispatchQueue.main.async {
+                backgroundCompletionHandler()
+            }
+        }
+    }
+
     func urlSession(
         _ session: URLSession,
         downloadTask: URLSessionDownloadTask,

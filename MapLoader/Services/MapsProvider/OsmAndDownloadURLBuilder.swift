@@ -53,9 +53,11 @@ struct OsmAndDownloadURLBuilder {
     }
 
     private func isMapDownloadAvailable(for region: Region) -> Bool {
-        if region.map == false { return false }
-        if region.map == true { return true }
-        return region.type == .map
+        if let type = region.type {
+            return type == .map
+        }
+
+        return region.map ?? true
     }
 
     private func mapName(

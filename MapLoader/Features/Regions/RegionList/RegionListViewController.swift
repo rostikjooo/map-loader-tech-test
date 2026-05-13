@@ -25,7 +25,6 @@ class RegionListViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupView()
-        setupTableView()
     }
     
     func setupView() {

@@ -17,6 +17,21 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         return true
     }
     
+    func application(
+        _ application: UIApplication,
+        handleEventsForBackgroundURLSession identifier: String,
+        completionHandler: @escaping () -> Void
+    ) {
+        let didHandleBackgroundEvents = appComposer.fileDownloader.handleEventsForBackgroundURLSession(
+            identifier: identifier,
+            completionHandler: completionHandler
+        )
+
+        if !didHandleBackgroundEvents {
+            completionHandler()
+        }
+    }
+    
     
     func sourceURLs(from maps: [MapModel]) -> [URL] {
         maps.flatMap { map in
@@ -40,4 +55,3 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
 
 }
-
