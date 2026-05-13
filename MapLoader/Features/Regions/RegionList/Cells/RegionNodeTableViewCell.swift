@@ -18,6 +18,7 @@ class RegionNodeTableViewCell: UITableViewCell {
     }
     
     private func setupAppearance() {
+        selectionStyle = .none
         iconImage?.tintColor = .iconDefault
         chevronImage?.tintColor = .iconDefault
         label?.font = .preferredFont(forTextStyle: .body)

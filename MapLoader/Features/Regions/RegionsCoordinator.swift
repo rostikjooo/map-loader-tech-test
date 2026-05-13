@@ -20,25 +20,22 @@ final class RegionsCoordinator {
     }
 
     func start() {
-        let viewModel = RegionListViewModel(
+        let viewModel = RootRegionListViewModel(
             mapsProvider: composer.mapsProvider,
             storageInfoProvider: composer.storageInfoProvider,
-            downloader: composer.fileDownloader
+            downloader: composer.fileDownloader,
+            coordinator: self
         )
         let viewController = RegionListViewController(viewModel: viewModel)
         navigationController.navigationBar.prefersLargeTitles = true
         navigationController.setViewControllers([viewController], animated: false)
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-            self.openSubregion()
-        }
     }
     
-    func openSubregion(/*for region: Region*/) {
-        let vc = UIViewController()
-        vc.view.backgroundColor = .white
-        vc.title = "detail"
-        vc.navigationItem.largeTitleDisplayMode = .never
-        navigationController.pushViewController(vc, animated: true)
+    func openSubregion(_ region: MapModel) {
+        let viewModel = RegionListViewModel(model: region, downloader: composer.fileDownloader, coordinator: self)
+        let viewController = RegionListViewController(viewModel: viewModel)
+        viewController.navigationItem.largeTitleDisplayMode = .never
+        navigationController.pushViewController(viewController, animated: true)
     }
 }

@@ -10,7 +10,7 @@ import UIKit
 
 class RegionListTableDataSource: SectionedListTableViewDataSource {
     
-    weak var viewModel: RegionListViewModel!
+    weak var viewModel: RegionListProviding!
     
     override var sections: [Section] {
         regionSections
@@ -20,16 +20,15 @@ class RegionListTableDataSource: SectionedListTableViewDataSource {
         regionRows
     }
     
-    final var regionSections: [Section] = []
-    final var regionRows: [[Row]] = []
+    var regionSections: [Section] = []
+    var regionRows: [[Row]] = []
     
-    init(viewModel: RegionListViewModel) {
+    init(viewModel: RegionListProviding) {
         self.viewModel = viewModel
     }
     
     override func registerCells(in tableView: UITableView) {
         super.registerCells(in: tableView)
-        // TODO: register cells
         tableView.register(
             UINib(nibName: "RegionNodeTableViewCell", bundle: nil),
             forCellReuseIdentifier: "RegionNodeTableViewCell"
@@ -40,27 +39,30 @@ class RegionListTableDataSource: SectionedListTableViewDataSource {
         )
     }
     
-    final func update(data: [MapModel]) {
+    func update(data: [MapModel]) {
         defer {
             reloadTable()
         }
-        
-        regionRows = [
-            [regionRow(id: "Q1"), regionNode(id: "Q2"), regionRow(id: "Q3")],
-            [regionRow(id: "Qs1"), regionNode(id: "Qs2"), regionRow(id: "Qs3")],
-            [regionRow(id: "Qs1"), regionNode(id: "Qs2"), regionRow(id: "Qs3")],
-            [regionRow(id: "Qs1"), regionNode(id: "Qs2"), regionRow(id: "Qs3")],
-            [regionRow(id: "Qs1"), regionNode(id: "Qs2"), regionRow(id: "Qs3")],
-            [regionRow(id: "Qs1"), regionNode(id: "Qs2"), regionRow(id: "Qs3")],
-            [regionRow(id: "Qs1"), regionNode(id: "Qs2"), regionRow(id: "Qs3")],
-        ]
-        regionSections = Array(
-            repeating: .init(id: "Q", name: "Europe"),
-            count: regionRows.count
-        )
+        let sectionRows = data.map { regionRow(region: $0) }
+         
+        regionSections = [Section(id: "first", name: nil)]
+        regionRows = [sectionRows]
     }
     
-    private func regionRow(id: String) -> Row {
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        let row = rows[indexPath.section][indexPath.row]
+        viewModel.didSelectRow(withId: row.id)
+    }
+    
+    func regionRow(region: MapModel) -> Row {
+        if region.childs.isEmpty {
+            return regionRow(id: region.id)
+        } else {
+            return regionNode(id: region.id)
+        }
+    }
+    
+    func regionRow(id: String) -> Row {
         Row(
             id: id,
             reuseIdentifier: "RegionTableViewCell",
@@ -71,7 +73,7 @@ class RegionListTableDataSource: SectionedListTableViewDataSource {
         )
     }
     
-    private func regionNode(id: String) -> Row {
+    func regionNode(id: String) -> Row {
         Row(
             id: id,
             reuseIdentifier: "RegionNodeTableViewCell",

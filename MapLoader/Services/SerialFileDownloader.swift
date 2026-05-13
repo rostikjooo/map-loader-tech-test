@@ -8,15 +8,14 @@
 import Foundation
 
 class SerialFileDownloader: NSObject {
+    static let downloadingAdvancedNotification = Notification.Name("myNotification")
+    
     private var session: URLSession!
     private var activeTask: URLSessionDownloadTask?
     private let fileManager = FileManager.default
     private let syncQueue = DispatchQueue(label: "com.map-loader.serial-file-downloader")
     private var fileMoveErrors: [Int: Error] = [:]
-
-    var onProgress: ((URL, Double) -> Void)?
-    var didFinish: ((URL, Error?) -> Void)?
-
+    private var currentProgress: [URL: Double] = [:]
     @Storage(key: "serialDownloaderQueueKey", fallback: []) private var queue: [URL]
 
     override init() {
@@ -36,9 +35,42 @@ class SerialFileDownloader: NSObject {
         }
     }
     
+    func cancelDownload(_ url: URL) {
+        syncQueue.async { [weak self] in
+            guard let self else { return }
+
+            self.queue.removeAll { $0 == url }
+            self.currentProgress.removeValue(forKey: url)
+
+            if self.activeTask?.originalRequest?.url == url {
+                self.activeTask?.cancel()
+            } else {
+                self.startNextIfNeeded()
+            }
+
+            self.postDownloadStateChanged()
+        }
+    }
+    
+    func isQueued(_ url: URL) -> Bool {
+        syncQueue.sync {
+            queue.contains(url)
+        }
+    }
+    
+    func progressFor(_ url: URL) -> Double {
+        syncQueue.sync {
+            currentProgress[url] ?? 0
+        }
+    }
+    
+    func isDownloaded(sourceURL url: URL) -> Bool {
+        downloadedFileLocationFor(sourceURL: url) != nil
+    }
+    
     func downloadedFileLocationFor(sourceURL url: URL) -> URL? {
         let localURL = destinationURL(for: url)
-        guard fileManager.fileExists(atPath: localURL.path()) else { return nil }
+        guard fileManager.fileExists(atPath: localURL.path) else { return nil }
         
         return localURL
     }
@@ -94,22 +126,47 @@ class SerialFileDownloader: NSObject {
         queue.removeAll { $0 == url }
     }
 
-    private func destinationURL(for sourceURL: URL) -> URL {
-        let cachesDirectory = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-        let downloadsDirectory = cachesDirectory.appendingPathComponent("Downloads", isDirectory: true)
-
-        if !fileManager.fileExists(atPath: downloadsDirectory.path) {
-            try? fileManager.createDirectory(
-                at: downloadsDirectory,
-                withIntermediateDirectories: true
-            )
+    private func postDownloadStateChanged() {
+        DispatchQueue.global().async {
+            NotificationCenter.default.post(name: Self.downloadingAdvancedNotification, object: nil)
         }
+    }
 
-        let filename = sourceURL.lastPathComponent.isEmpty
-            ? UUID().uuidString
-            : sourceURL.lastPathComponent
+    private func destinationURL(for sourceURL: URL) -> URL {
+        let appSupportURL = (try? FileManager.default.url(
+                for: .applicationSupportDirectory,
+                in: .userDomainMask,
+                appropriateFor: nil,
+                create: true
+            )) ?? fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+        let downloadsDirectory = appSupportURL.appendingPathComponent("Downloads", isDirectory: true)
+
+        try? FileManager.default.createDirectory(
+            at: downloadsDirectory,
+            withIntermediateDirectories: true
+        )
+
+        let filename = fileName(from: sourceURL) ?? String(sourceURL.hashValue)
 
         return downloadsDirectory.appendingPathComponent(filename)
+    }
+    
+    private func fileName(from remoteURL: URL) -> String? {
+        guard let components = URLComponents(
+            url: remoteURL,
+            resolvingAgainstBaseURL: false
+        ) else {
+            return nil
+        }
+
+        if let fileName = components.queryItems?
+            .first(where: { $0.name == "file" })?
+            .value,
+           !fileName.isEmpty {
+            return fileName
+        }
+
+        return nil
     }
 }
 
@@ -143,24 +200,24 @@ extension SerialFileDownloader: URLSessionDownloadDelegate {
     ) {
         syncQueue.async { [weak self] in
             guard let self else { return }
-            guard let sourceURL = task.originalRequest?.url else { return }
-            
+            let sourceURL = task.originalRequest?.url
             let moveError = fileMoveErrors.removeValue(forKey: task.taskIdentifier)
             let finalError = error ?? moveError
 
             if let finalError {
-                print("Download failed:", sourceURL, finalError)
-            } else {
-                removeFromQueue(sourceURL)
+                print("Download failed:", sourceURL as Any, finalError)
             }
 
-            self.removeFromQueue(sourceURL)
+            if let sourceURL {
+                removeFromQueue(sourceURL)
+                currentProgress.removeValue(forKey: sourceURL)
+            }
 
             if self.activeTask?.taskIdentifier == task.taskIdentifier {
                 self.activeTask = nil
             }
             
-            didFinish?(sourceURL, error)
+            self.postDownloadStateChanged()
             self.startNextIfNeeded()
         }
     }
@@ -174,11 +231,11 @@ extension SerialFileDownloader: URLSessionDownloadDelegate {
     ) {
         guard totalBytesExpectedToWrite > 0 else { return }
         guard let sourceURL = downloadTask.originalRequest?.url else { return }
-
+        
         let progress = Double(totalBytesWritten) / Double(totalBytesExpectedToWrite)
-
-        DispatchQueue.main.async { [weak self] in
-            self?.onProgress?(sourceURL, progress)
+        syncQueue.async { [weak self] in
+            self?.currentProgress[sourceURL] = progress
+            self?.postDownloadStateChanged()
         }
     }
 }

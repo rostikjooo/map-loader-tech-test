@@ -6,12 +6,12 @@
 //
 import UIKit
 
-final class RegionListViewController: UIViewController {
+class RegionListViewController: UIViewController {
     
     private let tableView = UITableView(frame: .zero, style: .insetGrouped)
-    private let viewModel: RegionListViewModel
+    private let viewModel: RegionListProviding
     
-    init(viewModel: RegionListViewModel) {
+    init(viewModel: RegionListProviding) {
         self.viewModel = viewModel
         super.init(nibName: nil, bundle: nil)
     }
@@ -50,10 +50,17 @@ final class RegionListViewController: UIViewController {
         tableView.separatorInset = .init(top: 0, left: 15, bottom: 0, right: 0)
         // FIXME: in design color is #E6E6E6
         tableView.separatorColor = .tableSeparator
+
         
         viewModel.tableViewDataSource.registerCells(in: tableView)
         tableView.dataSource = viewModel.tableViewDataSource
         tableView.delegate = viewModel.tableViewDataSource
+        viewModel.tableViewDataSource.getVisibleCell = { [weak tableView] indexPath in
+            tableView?.cellForRow(at: indexPath)
+        }
+        viewModel.tableViewDataSource.indexPathsForVisibleRows = { [weak tableView] in
+            tableView?.indexPathsForVisibleRows ?? []
+        }
         viewModel.tableViewDataSource.reloadTable = { [weak tableView] in
             tableView?.reloadData()
         }

@@ -30,6 +30,7 @@ class MemoryInfoTableViewCell: UITableViewCell {
     }
     
     private func configureAppearance() {
+        selectionStyle = .none
         contentView.backgroundColor = .backgroundWhiteGroup
         titleLabel?.font = .preferredFont(forTextStyle: .body)
         titleLabel?.adjustsFontForContentSizeCategory = true

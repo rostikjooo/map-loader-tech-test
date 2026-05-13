@@ -1,79 +1,63 @@
 //
-//  RegionListViewModel.swift
+//  SubregionListViewModel.swift
 //  MapLoader
 //
-//  Created by Rost on 11.05.2026.
+//  Created by Rost on 13.05.2026.
 //
 
-import Foundation
+import UIKit
 
-struct RegionListModel {
-    var storageInfo: StorageInfoProvider.StorageInfo?
-    var maps: [MapModel] = []
-    
-    var fractionSpaceTaken: CGFloat {
-        guard let storageInfo, let totalSpace = storageInfo.totalSpace else { return 0 }
-        let availableSpace = storageInfo.availableSpace
-        let fractionAvailable = availableSpace.converted(to: .bytes).value / totalSpace.converted(to: .bytes).value
-        
-        let fractionTaken = 1 - fractionAvailable
-        
-        return CGFloat(fractionTaken)
+class RegionListViewModel: RegionListProviding {
+    var tableViewDataSource: SectionedListTableViewDataSource! {
+        listDataSource
     }
-}
-
-final class RegionListViewModel {
-    let title = "Download Maps"
-    lazy var tableViewDataSource = RootRegionListTableDataSource(viewModel: self)
+    lazy var listDataSource = RegionListTableDataSource(viewModel: self)
+    var title: String {
+        model.name
+    }
+    let downloader: SerialFileDownloader
+    weak var coordinator: RegionsCoordinator!
     
-    private let mapsProvider: MapsProvider
-    private let storageInfoProvider: StorageInfoProvider
-    private let downloader: SerialFileDownloader
+    private var model: MapModel
     
-    private var model = RegionListModel()
-    
-    private let byteFormatter: MeasurementFormatter = {
-        let formatter = MeasurementFormatter()
-        formatter.unitStyle = .medium
-        formatter.unitOptions = .naturalScale
-        formatter.numberFormatter.maximumFractionDigits = 2
-        return formatter
-    }()
+    var downloadProgressObserver: NSObjectProtocol? = nil
     
     init(
-        mapsProvider: MapsProvider,
-        storageInfoProvider: StorageInfoProvider,
-        downloader: SerialFileDownloader
+        model: MapModel,
+        downloader: SerialFileDownloader,
+        coordinator: RegionsCoordinator
     ) {
-        self.mapsProvider = mapsProvider
-        self.storageInfoProvider = storageInfoProvider
         self.downloader = downloader
-        
+        self.model = model
+        self.coordinator = coordinator
         loadData()
     }
     
     func loadData() {
-        let storageInfo = try? storageInfoProvider.currentStorageInfo()
-        model.storageInfo = storageInfo
-        tableViewDataSource.update(data: [])
+        listDataSource.update(data: model.childs)
+        subscribeToDataUpdates()
     }
     
-    func configureDeviceMemoryCell(_ cell: MemoryInfoTableViewCell) {
-        let freeSpace = model.storageInfo?.availableSpace
-        let freeSpaceString = freeSpace.map { byteFormatter.string(from: $0) }
-        let summary = freeSpaceString.map { "Free \($0)" } ?? ""
-        let viewModel = MemoryInfoTableViewCell.ViewModel(title: "Device memory", summary: summary, occupiedMemoryFraction: model.fractionSpaceTaken)
-        
-        cell.apply(viewModel: viewModel)
+    func subscribeToDataUpdates() {
+        downloadProgressObserver = NotificationCenter.default.addObserver(
+            forName: SerialFileDownloader.downloadingAdvancedNotification,
+            object: nil,
+            queue: .main
+        ) { [weak tableViewDataSource] notification in
+            tableViewDataSource?.updateVisibleRows()
+        }
     }
     
-    func configureRegionCell(cell: RegionTableViewCell, byId: String) {
-        let status: RegionTableViewCell.ViewModel.Status = [.loaded, .loading(progress: 0.3), .notLoaded].randomElement()!
-        let viewModel = RegionTableViewCell.ViewModel(name: "Test", status: status)
-        cell.apply(viewModel: viewModel)
-    }
-    
-    func configureRegionNodeCell(cell: RegionNodeTableViewCell, byId: String) {
-        cell.apply(name: "Node test")
+    func findRegion(byId id: String) -> MapModel? {
+        for region in model.childs {
+            if region.id == id {
+                return region
+            }
+            let found = region.childs.first { $0.id == id }
+            if let found {
+                return found
+            }
+        }
+        return nil
     }
 }

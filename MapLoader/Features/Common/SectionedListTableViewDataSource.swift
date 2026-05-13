@@ -13,16 +13,47 @@ class SectionedListTableViewDataSource: NSObject {
     var rows: [[Row]] { [] }
     var reloadTable: () -> Void = { }
     
+    var getVisibleCell: (IndexPath) -> UITableViewCell? = { _ in nil }
+    var indexPathsForVisibleRows: () -> [IndexPath] = { [] }
+    
     func registerCells(in tableView: UITableView) {}
+    
+    func updateItem(id: String) {
+        guard let indexPath = findRowIndexPath(id: id),
+              let cell = getVisibleCell(indexPath) else { return }
+        
+        let row = rows[indexPath.section][indexPath.row]
+        row.configure(cell)
+    }
+    
+    func updateVisibleRows() {
+        let paths = indexPathsForVisibleRows()
+        paths.forEach {
+            guard let cell = getVisibleCell($0) else { return }
+            rows[$0.section][$0.row].configure(cell)
+        }
+    }
+    
+    private func findRowIndexPath(id: String) -> IndexPath? {
+        for (sectionIndex, section) in rows.enumerated() {
+            let rowIndex = section.firstIndex {
+                $0.id == id
+            }
+            if let rowIndex {
+                return IndexPath(row: rowIndex, section: sectionIndex)
+            }
+        }
+        return nil
+    }
 }
 
 extension SectionedListTableViewDataSource {
-    struct Section {
+    struct Section: Identifiable {
         let id: String
         let name: String?
     }
 
-    struct Row {
+    struct Row: Identifiable {
         let id: String
         let reuseIdentifier: String
         let configure: (UITableViewCell) -> Void

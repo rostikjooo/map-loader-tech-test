@@ -20,6 +20,7 @@ class RegionTableViewCell: UITableViewCell {
     }
 
     private func setupAppearance() {
+        selectionStyle = .none
         iconImage?.tintColor = .iconDefault
         nameLabel?.font = .preferredFont(forTextStyle: .body)
         nameLabel?.textColor = .textPrimary

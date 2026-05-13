@@ -56,23 +56,22 @@ final class MapsProvider {
     }
     
     private func fetchMaps()  async throws -> [MapModel] {
-        
-        let regions = try await regionsFetcher.fetchRegions()
-        
-        let maps = regions.map { region in
-            mapModel(
-                for: region,
-                regionPath: []
-            )
-        }
-        
-        return maps
+        try await Task {
+            let regions = try await regionsFetcher.fetchRegions()
+            let maps = regions.compactMap { region in
+                mapModel(
+                    for: region,
+                    regionPath: []
+                )
+            }
+            return maps
+        }.value
     }
     
     private func mapModel(
         for region: Region,
         regionPath: [Region]
-    ) -> MapModel {
+    ) -> MapModel? {
         let currentRegionPath = regionPath + [region]
         
         let sourceURL = urlBuilder.mapDownloadURL(
@@ -81,21 +80,22 @@ final class MapsProvider {
         )
         
         let currentPath = currentRegionPath.map(\.name)
-        let childs = region.children.map { child in
+        let childs = region.children.compactMap { child in
             mapModel(
                 for: child,
                 regionPath: currentRegionPath
             )
         }
         
+        guard sourceURL != nil || !childs.isEmpty else {
+            return nil
+        }
+        
         return MapModel(
             name: region.name,
             path: currentPath,
             sourceURL: sourceURL,
-            childs: childs,
-            isDownloaded: sourceURL.flatMap {
-                downloader.downloadedFileLocationFor(sourceURL: $0)
-            } != nil
+            childs: childs
         )
     }
 }
@@ -106,5 +106,8 @@ struct MapModel: Sendable {
     let path: [String]
     let sourceURL: URL?
     let childs: [MapModel]
-    let isDownloaded: Bool
+    
+    var id: String {
+        path.joined(separator: "/")
+    }
 }
